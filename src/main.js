@@ -14,6 +14,7 @@ document.body.appendChild(loader);
 
 let currentPage = 1;
 let currentQuery = '';
+let totalHits = 0;
 
 form.addEventListener('submit', async event => {
   event.preventDefault();
@@ -23,11 +24,15 @@ form.addEventListener('submit', async event => {
     return;
   }
 
+  // Очищуємо поле вводу після сабміту форми
+  event.currentTarget.reset();
+
   try {
     loader.classList.remove('hidden');
     gallery.innerHTML = '';
     currentPage = 1;
     const data = await fetchImages(currentQuery, currentPage);
+    totalHits = data.totalHits;
 
     loader.classList.add('hidden');
     if (data.hits.length === 0) {
@@ -40,8 +45,10 @@ form.addEventListener('submit', async event => {
     }
 
     renderGallery(data.hits);
-    if (data.totalHits > 15) {
+    if (totalHits > 15) {
       loadMoreBtn.classList.remove('hidden');
+    } else {
+      loadMoreBtn.classList.add('hidden');
     }
 
     smoothScroll(gallery);
@@ -56,15 +63,17 @@ loadMoreBtn.addEventListener('click', async () => {
     currentPage += 1;
     loader.classList.remove('hidden');
     const data = await fetchImages(currentQuery, currentPage);
-    loader.classList.add('hidden');
 
     appendImages(data.hits);
-    if (currentPage * 15 >= data.totalHits) {
+    loader.classList.add('hidden');
+    if (currentPage * 15 >= totalHits) {
       loadMoreBtn.classList.add('hidden');
       iziToast.error({
-        title: 'Error',
+        title: 'Info',
         message: "We're sorry, but you've reached the end of search results.",
       });
+    } else {
+      loadMoreBtn.classList.remove('hidden');
     }
 
     smoothScroll(gallery);
